@@ -1,5 +1,6 @@
 package com.mycompany.bsds.quickstart;
 
+import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -55,6 +56,22 @@ public class MyResource {
     @Consumes("application/json")
     public int postIt(RFIDLiftData liftData) {
         rawData.add(liftData);
+        return rawData.size();
+    }
+    
+        /**
+     * Consumes a post request and stores the data into a queue. 
+     *
+     * @param liftData
+     * @param message a message
+     * @return a Response
+     */
+    @POST
+    @Path("/loadBatch")
+    @Consumes("application/json")
+    public int postBatch(List<RFIDLiftData> liftData) {
+        System.out.println("Post batch hit!");
+        rawData.addAll(liftData);
         return rawData.size();
     }
     

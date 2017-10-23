@@ -87,6 +87,8 @@ public class DataAccess {
             }
             statement.executeBatch();
             connection.commit();
+            connection.close();
+
             System.out.println("Batch successfully committed");
         } catch (SQLException se) {
             System.out.println("Batch failed; SQL exception");

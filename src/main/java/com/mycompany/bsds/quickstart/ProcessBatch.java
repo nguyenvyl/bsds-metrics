@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class ProcessBatch implements Runnable {
 
-    private static int BATCH_SIZE = 1000;
+    private static final int BATCH_SIZE = 5000;
 
     List<RFIDLiftData> dataList;
     DataAccess dataAccess;
@@ -26,6 +26,7 @@ public class ProcessBatch implements Runnable {
     @Override
     public void run() {
         List<RFIDLiftData> batch = getBatch(BATCH_SIZE);
+        System.out.println("Trying to write batch of size " + batch.size());
         if(batch.size() > 0){
             dataAccess.writeRFIDBatchToDatabase(batch);
         }
@@ -35,10 +36,10 @@ public class ProcessBatch implements Runnable {
     // for batch processing. 
     public List<RFIDLiftData> getBatch(int batchSize) {
         List<RFIDLiftData> batch = new ArrayList<>();
-        for (int i = 0; i < batchSize; i++) {
-            if (!MyResource.rawData.isEmpty()) {
-                batch.add(MyResource.rawData.poll());
-            }
+        int i = 0;
+        while (i < batchSize && !MyResource.rawData.isEmpty()) {
+            batch.add(MyResource.rawData.poll());
+            i++;
         }
         return batch;
     }
