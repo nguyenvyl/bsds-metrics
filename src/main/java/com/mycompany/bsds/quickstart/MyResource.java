@@ -39,7 +39,6 @@ public class MyResource {
             @QueryParam("skierID") int skierID,
             @QueryParam("dayNum") int dayNum) 
     {
-        System.out.println("GET endpoint hit!");
         Response response = Response.status(Response.Status.OK).build();
         return response;
     }

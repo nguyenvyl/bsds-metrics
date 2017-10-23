@@ -15,8 +15,8 @@ import java.util.concurrent.TimeUnit;
  * @author nguyenvyl
  */
 public class MessageProcessor {
-    private static int THREAD_POOL_SIZE = 100;
-    private static int THREAD_DELAY = 500;
+    private static int THREAD_POOL_SIZE = 300;
+    private static int THREAD_DELAY = 200;
     
     
     public static void startMessageProcessor() {

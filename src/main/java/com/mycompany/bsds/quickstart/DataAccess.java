@@ -9,11 +9,11 @@ import java.util.List;
 
 public class DataAccess {
 
-    private static final String PUBLIC_DNS = "aa4o9xnp4f1176.cdqh8w1txiil.us-west-2.rds.amazonaws.com";
+    private static final String PUBLIC_DNS = "aaevg5ww0x1b7m.cdqh8w1txiil.us-west-2.rds.amazonaws.com";
     private static final String PORT = "3306";
     private static final String DATABASE = "ebdb";
-    private static final String REMOTE_DATABASE_USERNAME = "nguyenvyl";
-    private static final String DATABASE_USER_PASSWORD = "Typhlosion1";
+    private static final String REMOTE_DATABASE_USERNAME = "admin";
+    private static final String DATABASE_USER_PASSWORD = "adminadmin";
 
     private static final String userQuery = "SELECT lift_id, COUNT(*) FROM rides WHERE skier_id=? AND day=? GROUP BY lift_id";
 
@@ -38,8 +38,9 @@ public class DataAccess {
         Connection connection = null;
 
         try {
+            String connectionString = "jdbc:mysql://" + PUBLIC_DNS + ":" + PORT + "/" + DATABASE;
             connection = DriverManager.
-                    getConnection("jdbc:mysql://" + PUBLIC_DNS + ":" + PORT + "/" + DATABASE, REMOTE_DATABASE_USERNAME, DATABASE_USER_PASSWORD);
+                    getConnection(connectionString, REMOTE_DATABASE_USERNAME, DATABASE_USER_PASSWORD);
         } catch (SQLException e) {
             System.out.println("Connection Failed!:\n" + e.getMessage());
         }
@@ -74,6 +75,9 @@ public class DataAccess {
     public void writeRFIDBatchToDatabase(List<RFIDLiftData> dataList) {
         Statement statement = null;
         try {
+            if(this.connection == null) {
+                getAWSConnection();
+            }
             for (RFIDLiftData data : dataList) {
                 String tableName = "rfid_data_day_" + data.getDayNum();
                 connection.setAutoCommit(false);
@@ -83,10 +87,15 @@ public class DataAccess {
             }
             statement.executeBatch();
             connection.commit();
+            System.out.println("Batch successfully committed");
         } catch (SQLException se) {
+            System.out.println("Batch failed; SQL exception");
+
             //Handle errors for JDBC
             se.printStackTrace();
         } catch (Exception e) {
+            System.out.println("Batch failed; general exception");
+
             //Handle errors for Class.forName
             e.printStackTrace();
         }

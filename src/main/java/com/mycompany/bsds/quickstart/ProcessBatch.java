@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class ProcessBatch implements Runnable {
 
-    private static int BATCH_SIZE = 100;
+    private static int BATCH_SIZE = 1000;
 
     List<RFIDLiftData> dataList;
     DataAccess dataAccess;
