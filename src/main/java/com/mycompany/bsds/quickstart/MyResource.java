@@ -21,10 +21,11 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 @Path("myresource")
 public class MyResource {
     public static ConcurrentLinkedQueue<RFIDLiftData> rawData = new ConcurrentLinkedQueue();
+    public DataAccess dataAccess = new DataAccess();
     
-    static {
-        MessageProcessor.startMessageProcessor();
-    }
+//    static {
+//        MessageProcessor.startMessageProcessor();
+//    }
     
     /**
      * To retrieve a message
@@ -36,12 +37,11 @@ public class MyResource {
     @GET
     @Path("myvert")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIt(
+    public SkierData getIt(
             @QueryParam("skierID") int skierID,
             @QueryParam("dayNum") int dayNum) 
     {
-        Response response = Response.status(Response.Status.OK).build();
-        return response;
+        return dataAccess.getUserData(skierID, dayNum);
     }
 
     /**
@@ -70,14 +70,27 @@ public class MyResource {
     @Path("/loadBatch")
     @Consumes("application/json")
     public int postBatch(List<RFIDLiftData> liftData) {
-        System.out.println("Post batch hit!");
         rawData.addAll(liftData);
         return rawData.size();
+    }
+    
+    @POST
+    @Path("/loadUsers")
+    @Consumes(MediaType.TEXT_PLAIN)
+    public void loadUsers(int dayNum) {
+        MessageProcessor.startUserCalculations(dayNum);
     }
     
     @GET
     @Path("/queuesize")
     public int queuesize() {
+        return rawData.size();
+    }
+    
+    @GET
+    @Path("/emptyBatch")
+    public int emptyBatch() {
+        rawData.removeAll(rawData);
         return rawData.size();
     }
 }
