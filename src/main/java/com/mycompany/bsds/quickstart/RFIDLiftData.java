@@ -5,13 +5,14 @@
  */
 package com.mycompany.bsds.quickstart;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.io.Serializable;
-import org.json.JSONObject;
 
 /**
  *
  * @author nguyenvyl
  */
+@JsonPropertyOrder({"resortID", "dayNum", "skierID", "liftID", "time"})
 public class RFIDLiftData implements Serializable, Comparable<RFIDLiftData>  {
     private int resortID;
     private int dayNum;
@@ -23,7 +24,6 @@ public class RFIDLiftData implements Serializable, Comparable<RFIDLiftData>  {
     }
     
     
-
     public RFIDLiftData(int resortID, int dayNum, int skierID, int liftID, int time) {
         this.resortID = resortID;
         this.dayNum = dayNum;

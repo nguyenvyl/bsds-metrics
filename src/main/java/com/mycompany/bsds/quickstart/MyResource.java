@@ -6,26 +6,23 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Root resource (exposed at "myresource" path)
  */
 import java.util.concurrent.ConcurrentLinkedQueue;
-import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response.ResponseBuilder;
 
 @Path("myresource")
 public class MyResource {
     public static ConcurrentLinkedQueue<RFIDLiftData> rawData = new ConcurrentLinkedQueue();
-    public DataAccess dataAccess = new DataAccess();
-    
-//    static {
-//        MessageProcessor.startMessageProcessor();
-//    }
+    public static final int flag = 0;
+
+//    
+    static {
+        MessageProcessor.checkQueue();
+    }
     
     /**
      * To retrieve a message
@@ -41,7 +38,8 @@ public class MyResource {
             @QueryParam("skierID") int skierID,
             @QueryParam("dayNum") int dayNum) 
     {
-        return dataAccess.getUserData(skierID, dayNum);
+        return new SkierData();
+//        return dataAccess.getUserData(skierID, dayNum);
     }
 
     /**
@@ -71,6 +69,10 @@ public class MyResource {
     @Consumes("application/json")
     public int postBatch(List<RFIDLiftData> liftData) {
         rawData.addAll(liftData);
+//        if(rawData.size() >= 80000) {
+//            int dayNum = liftData.get(0).getDayNum();
+//            processQueue(dayNum);
+//        }
         return rawData.size();
     }
     
@@ -93,4 +95,16 @@ public class MyResource {
         rawData.removeAll(rawData);
         return rawData.size();
     }
+    
+//    private void processQueue(final int dayNum) {
+//        System.out.println("Process queue!");
+//        final String fileName = CSVCreator.writeRFIDToCSV(rawData, "tempFile");
+//        rawData.removeAll(rawData);
+//        new Thread(new Runnable() {
+//            public void run() {
+//                DataAccess dataAccess = new DataAccess();
+//                dataAccess.loadCSVToDatabase(fileName, dayNum);
+//            }
+//        }).start();
+//    }
 }

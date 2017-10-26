@@ -14,10 +14,10 @@ import java.util.List;
  */
 public class ProcessCalcBatch implements Runnable {
     
-    private DataAccess dataAccess;
-    private int startUser;
-    private int endUser;
-    private int dayNum;
+    private final DataAccess dataAccess;
+    private final int startUser;
+    private final int endUser;
+    private final int dayNum;
     
     public ProcessCalcBatch(int startUser, int endUser, int dayNum) {
         dataAccess = new DataAccess();
@@ -29,12 +29,7 @@ public class ProcessCalcBatch implements Runnable {
     @Override
     public void run() {
         for(int i = startUser; i < endUser; i++) {
-            SkierData skier = dataAccess.calculateUserStats(i, dayNum);
-            dataAccess.writeSkierToDatabase(skier);
+            dataAccess.calculateUserStats(i, dayNum);
         }
-
     }
-
-
-
 }
