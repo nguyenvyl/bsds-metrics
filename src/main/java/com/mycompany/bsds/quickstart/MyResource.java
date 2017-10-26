@@ -69,10 +69,6 @@ public class MyResource {
     @Consumes("application/json")
     public int postBatch(List<RFIDLiftData> liftData) {
         rawData.addAll(liftData);
-//        if(rawData.size() >= 80000) {
-//            int dayNum = liftData.get(0).getDayNum();
-//            processQueue(dayNum);
-//        }
         return rawData.size();
     }
     
@@ -96,15 +92,4 @@ public class MyResource {
         return rawData.size();
     }
     
-//    private void processQueue(final int dayNum) {
-//        System.out.println("Process queue!");
-//        final String fileName = CSVCreator.writeRFIDToCSV(rawData, "tempFile");
-//        rawData.removeAll(rawData);
-//        new Thread(new Runnable() {
-//            public void run() {
-//                DataAccess dataAccess = new DataAccess();
-//                dataAccess.loadCSVToDatabase(fileName, dayNum);
-//            }
-//        }).start();
-//    }
 }

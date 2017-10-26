@@ -8,6 +8,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.List;
+import java.sql.CallableStatement;
+
 
 public class DataAccess {
 
@@ -83,30 +85,8 @@ public class DataAccess {
         }
     }
 
-    // Writes a single user to the database. 
-    public void writeSkierToDatabase(SkierData skierData) {
-        System.out.println("Write Skier to database");
-        Statement statement;
-        try {
-            if (this.connection == null) {
-                getAWSConnection();
-            }
-            String tableName = "user_data_day_" + Integer.toString(skierData.getDayNum());
-            statement = this.connection.createStatement();
-            String sql = "INSERT INTO " + tableName + " VALUES " + skierData.toSQLString()
-                    + " ON duplicate key update totalLifts = " + skierData.getTotalLifts() + ", totalVert = " + skierData.getTotalVert();
-            statement.executeUpdate(sql);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        }
-    }
 
-    // Given a skier and day, calculates the user's stats for that day and returns
-    // their data.
+    // Given a skier and day, calculates the user's stats for that day and writes the result into a table
     public void calculateUserStats(int skierID, int dayNum) {
         System.out.println("calculate user stats");
         try {
@@ -115,17 +95,18 @@ public class DataAccess {
             }
             String skierIDString = Integer.toString(skierID);
             String dayNumString = Integer.toString(dayNum);
-            String tableName = "rfid_data_day_" + Integer.toString(dayNum);
-            String query = "REPLACE user_data_day_99(skierID, totalLifts, totalVert, dayNum) "
+            String sourceTableName = "rfid_data_day_" + Integer.toString(dayNum);
+            String destTableName = "user_data_day_" + dayNumString;
+            String query = "REPLACE " + destTableName + " (skierID, totalLifts, totalVert, dayNum) "
                     + "SELECT " + skierIDString + " as skierID, "
                     + "SUM(CASE WHEN skierID = " + skierIDString + " THEN 1 ELSE 0 END) AS lifts,"
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID < 11  THEN 200 ELSE 0 END) "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 10 AND liftID < 21 THEN 300 ELSE 0 END) "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 20 AND liftID < 31 THEN 400 ELSE 0 END) "
+                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID < 11  THEN 200 ELSE 0 END) + "
+                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 10 AND liftID < 21 THEN 300 ELSE 0 END) + "
+                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 20 AND liftID < 31 THEN 400 ELSE 0 END) + "
                     + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 30 AND liftID < 41 THEN 500 ELSE 0 END) AS vert, "
-                    + dayNumString + " as dayNum FROM " + tableName;
+                    + dayNumString + " as dayNum FROM " + sourceTableName;
             Statement statement = this.connection.createStatement();
-//            System.out.println(query);
+            System.out.println(query);
             statement.executeUpdate(query);
         } catch (SQLException se) {
             //Handle errors for JDBC
@@ -139,7 +120,6 @@ public class DataAccess {
     // Given a skier and day, retrieves the user's statistics for that day from the DB. 
     public SkierData getUserData(int skierID, int dayNum) {
         System.out.println("GetUserData");
-
         SkierData skierData = new SkierData(skierID, dayNum);
         try {
             if (this.connection == null) {
@@ -165,9 +145,25 @@ public class DataAccess {
         }
         return skierData;
     }
+    
+    // Executes a stored proc that will calculate all the user's stats for a given day. 
+    public void executeUserCalculations(int dayNum){
+        try {
+            CallableStatement cStmt = this.connection.prepareCall("{CALL `ebdb`.`calculate_user_stats`(?)}");
+            cStmt.setInt(1, dayNum);
+            cStmt.execute();
+        } catch (SQLException se) {
+            //Handle errors for JDBC
+            se.printStackTrace();
+        } catch (Exception e) {
+            //Handle errors for Class.forName
+            e.printStackTrace();
+        }
 
+    }
+
+    // Loads the specified csv file into the database. 
     public void loadCSVToDatabase(String fileName, int dayNum) {
-        System.out.println("load CSV to database");
         try {
             if (this.connection == null) {
                 getAWSConnection();
@@ -175,24 +171,13 @@ public class DataAccess {
             String property = "java.io.tmpdir";
             String tempDir = System.getProperty(property);
             String path = tempDir + "/" + fileName;
-            System.out.println("Temp directory is: " + tempDir);
             Statement statement = connection.createStatement();
             String tableName = "rfid_data_day_" + dayNum;
             String query = "LOAD DATA LOCAL INFILE '" + path + "'"
                     + " INTO TABLE " + tableName + " FIELDS TERMINATED BY ',' "
                     + " LINES TERMINATED BY '" + "\\" + "n' IGNORE 1 LINES (resortID, dayNum, skierID, liftID, time);";
-            System.out.println(query);
-            long startTime = System.currentTimeMillis();
             statement.executeUpdate(query);
-            long wallTime = System.currentTimeMillis() - startTime;
-            System.out.println("Wall time to write to DB: " + wallTime);
-            boolean deleted = Files.deleteIfExists(Paths.get(path));
-            if(deleted) {
-                System.out.println("File " + path + " deleted!");
-            } else {
-                System.out.println("File failed to delete!");
-            }
-            System.out.println("CSV loaded to DB!");
+            Files.deleteIfExists(Paths.get(path));
         } catch (Exception e) {
             System.out.println(e);
         }

@@ -22,16 +22,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class MessageProcessor {
 
-    private final static int THREAD_POOL_SIZE = 150;
-    private final static int THREAD_DELAY = 100;
-
-    // Starts a scheduled executor service that constantly processes any POST requests waiting 
-    // in the queue to be written to the database. 
-//    public static void startMessageProcessor() {
-//        Runnable processBatch = new ProcessPostBatch();
-//        ScheduledExecutorService scheduledPool = Executors.newScheduledThreadPool(THREAD_POOL_SIZE);
-//        scheduledPool.scheduleAtFixedRate(processBatch, 10, THREAD_DELAY, TimeUnit.MILLISECONDS);
-//    }
     public static void checkQueue() {
         Timer timer = new Timer();
         timer.schedule(new ProcessQueue(), 0, 10000);
@@ -39,17 +29,14 @@ public class MessageProcessor {
 
     static class ProcessQueue extends TimerTask {
         public void run() {
-            System.out.println("Checking queue...");
-            System.out.println("Current queue size: " + rawData.size());
             if (rawData.size() >= 800000) {
-                System.out.println("Queue is 800000! Time to write to csv!");
                 int dayNum = rawData.peek().getDayNum();
                 final String fileName = CSVCreator.writeRFIDToCSV(rawData, "tempFile");
                 rawData.removeAll(rawData);
                 DataAccess dataAccess = new DataAccess();
                 dataAccess.loadCSVToDatabase(fileName, dayNum);
+                dataAccess.executeUserCalculations(dayNum);
             }
-
         }
     }
 

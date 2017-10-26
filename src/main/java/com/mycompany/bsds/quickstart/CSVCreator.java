@@ -28,6 +28,7 @@ import java.util.logging.Logger;
  */
 public class CSVCreator {
         
+    // Writes a collection of RFIDLiftData objects into a .csv file. 
     public static String writeRFIDToCSV(Collection<RFIDLiftData> data, String fileName){
         // create mapper and schema
         CsvMapper mapper = new CsvMapper();
