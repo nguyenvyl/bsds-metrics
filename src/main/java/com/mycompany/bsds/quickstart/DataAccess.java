@@ -1,5 +1,6 @@
 package com.mycompany.bsds.quickstart;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -10,7 +11,9 @@ import java.sql.Statement;
 import java.util.List;
 import java.sql.CallableStatement;
 
-
+/**
+ * Class used to access RDS.
+ */
 public class DataAccess {
 
     private static final String PUBLIC_DNS = "aaevg5ww0x1b7m.cdqh8w1txiil.us-west-2.rds.amazonaws.com";
@@ -24,38 +27,38 @@ public class DataAccess {
     public DataAccess() {
     }
 
+    /**
+     * Establishes a connection to the AWS RDS database.
+     */
     public void getAWSConnection() {
-
-        System.out.println("----MySQL JDBC Connection Testing -------");
-
         try {
             Class.forName("com.mysql.jdbc.Driver");
         } catch (ClassNotFoundException e) {
-            System.out.println("Where is your MySQL JDBC Driver?");
-            e.printStackTrace();
+            System.err.println(e.getCause());
         }
 
-        System.out.println("MySQL JDBC Driver Registered!");
-        Connection connection = null;
+        Connection myConnection = null;
 
         try {
             String connectionString = "jdbc:mysql://" + PUBLIC_DNS + ":" + PORT + "/" + DATABASE;
-            connection = DriverManager.
+            myConnection = DriverManager.
                     getConnection(connectionString, REMOTE_DATABASE_USERNAME, DATABASE_USER_PASSWORD);
         } catch (SQLException e) {
-            System.out.println("Connection Failed!:\n" + e.getMessage());
+            System.err.println("Connection Failed!:\n" + e.getMessage());
         }
 
-        if (connection == null) {
-            System.out.println("Unable to connect to database!");
+        if (myConnection == null) {
+            System.err.println("Unable to connect to database!");
         } else {
-            System.out.println("Database connected!");
-            this.connection = connection;
+            this.connection = myConnection;
         }
     }
 
+    /**
+     * Creates a batch of SQL inserts for the given list of RFIDLiftData objects.
+     * @param dataList List of data to write to the DB.
+     */
     public void writeRFIDBatchToDatabase(List<RFIDLiftData> dataList) {
-        System.out.println("Write RFID batch to database");
         Statement statement = null;
         try {
             if (this.connection == null) {
@@ -71,53 +74,19 @@ public class DataAccess {
             statement.executeBatch();
             connection.commit();
             statement.clearBatch();
-            System.out.println("Batch successfully committed");
         } catch (SQLException se) {
-            System.out.println("Batch failed; SQL exception");
-
-            //Handle errors for JDBC
-            se.printStackTrace();
+            System.err.println(se.getCause());
         } catch (Exception e) {
-            System.out.println("Batch failed; general exception");
-
-            //Handle errors for Class.forName
-            e.printStackTrace();
+            System.err.println(e.getCause());
         }
     }
 
-
-    // Given a skier and day, calculates the user's stats for that day and writes the result into a table
-    public void calculateUserStats(int skierID, int dayNum) {
-        System.out.println("calculate user stats");
-        try {
-            if (this.connection == null) {
-                getAWSConnection();
-            }
-            String skierIDString = Integer.toString(skierID);
-            String dayNumString = Integer.toString(dayNum);
-            String sourceTableName = "rfid_data_day_" + Integer.toString(dayNum);
-            String destTableName = "user_data_day_" + dayNumString;
-            String query = "REPLACE " + destTableName + " (skierID, totalLifts, totalVert, dayNum) "
-                    + "SELECT " + skierIDString + " as skierID, "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " THEN 1 ELSE 0 END) AS lifts,"
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID < 11  THEN 200 ELSE 0 END) + "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 10 AND liftID < 21 THEN 300 ELSE 0 END) + "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 20 AND liftID < 31 THEN 400 ELSE 0 END) + "
-                    + "SUM(CASE WHEN skierID = " + skierIDString + " AND liftID > 30 AND liftID < 41 THEN 500 ELSE 0 END) AS vert, "
-                    + dayNumString + " as dayNum FROM " + sourceTableName;
-            Statement statement = this.connection.createStatement();
-            System.out.println(query);
-            statement.executeUpdate(query);
-        } catch (SQLException se) {
-            //Handle errors for JDBC
-            se.printStackTrace();
-        } catch (Exception e) {
-            //Handle errors for Class.forName
-            e.printStackTrace();
-        }
-    }
-
-    // Given a skier and day, retrieves the user's statistics for that day from the DB. 
+    /**
+     * Given a skier and day, retrieves the user's statistics for that day from the DB. 
+     * @param skierID ID of the skier
+     * @param dayNum number representing the day 
+     * @return SkierData object containing the user's statistics
+     */
     public SkierData getUserData(int skierID, int dayNum) {
         System.out.println("GetUserData");
         SkierData skierData = new SkierData(skierID, dayNum);
@@ -138,15 +107,19 @@ public class DataAccess {
             skierData.setTotalVert(totalVert);
         } catch (SQLException se) {
             //Handle errors for JDBC
-            se.printStackTrace();
+            System.err.println(se.getCause());
         } catch (Exception e) {
             //Handle errors for Class.forName
-            e.printStackTrace();
+            System.err.println(e.getCause());
         }
         return skierData;
     }
     
-    // Executes a stored proc that will calculate all the user's stats for a given day. 
+    /** Executes a stored proc that will calculate all the user's stats for a given day. 
+     * You can find the CREATE PROCEDURE script for the stored proc in 
+     * \src\main\resources\calculate_user_stats.sql.
+     * @param dayNum day number to calculate all user stats for
+     */
     public void executeUserCalculations(int dayNum){
         try {
             CallableStatement cStmt = this.connection.prepareCall("{CALL `ebdb`.`calculate_user_stats`(?)}");
@@ -154,15 +127,19 @@ public class DataAccess {
             cStmt.execute();
         } catch (SQLException se) {
             //Handle errors for JDBC
-            se.printStackTrace();
+            System.err.println(se.getCause());
         } catch (Exception e) {
             //Handle errors for Class.forName
-            e.printStackTrace();
+            System.err.println(e.getCause());
         }
 
     }
 
-    // Loads the specified csv file into the database. 
+    /**
+     * Loads the specified CSV file into the database.
+     * @param fileName name of file to bulk load
+     * @param dayNum day of the file's data
+     */
     public void loadCSVToDatabase(String fileName, int dayNum) {
         try {
             if (this.connection == null) {
@@ -178,8 +155,8 @@ public class DataAccess {
                     + " LINES TERMINATED BY '" + "\\" + "n' IGNORE 1 LINES (resortID, dayNum, skierID, liftID, time);";
             statement.executeUpdate(query);
             Files.deleteIfExists(Paths.get(path));
-        } catch (Exception e) {
-            System.out.println(e);
+        } catch (IOException | SQLException e) {
+            System.err.println(e.getCause());
         }
     }
 

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mycompany.bsds.quickstart;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -16,25 +11,19 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-/**
- *
- * @author Vy
- */
+
 public class CSVCreator {
         
-    // Writes a collection of RFIDLiftData objects into a .csv file. 
+    /**
+     * Utility method that writes a collection of RFID lift data into a temporary CSV file.
+     * @param data list of RFIDLiftData objects to write to file
+     * @param fileName desired filename
+     * @return The name of the created file
+     */
     public static String writeRFIDToCSV(Collection<RFIDLiftData> data, String fileName){
-        // create mapper and schema
         CsvMapper mapper = new CsvMapper();
         CsvSchema schema = mapper.schemaFor(RFIDLiftData.class).withColumnSeparator(',');
-
-        // output writer
         ObjectWriter myObjectWriter = mapper.writer(schema);
         
         try {
@@ -44,15 +33,13 @@ public class CSVCreator {
             BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(tempFileOutputStream, 1024);
             OutputStreamWriter writerOutputStream = new OutputStreamWriter(bufferedOutputStream, "UTF-8");
             myObjectWriter.writeValue(writerOutputStream, data);
-            System.out.println("File written to system!");
-            System.out.println("File Name: " + tempFile.getName());
             return tempFile.getName();
         } catch (FileNotFoundException ex) {
-            Logger.getLogger(CSVCreator.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.print(ex.getMessage());
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(CSVCreator.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.print(ex.getMessage());
         } catch (IOException ex) {
-            Logger.getLogger(CSVCreator.class.getName()).log(Level.SEVERE, null, ex);
+            System.err.print(ex.getMessage());
         }    
         return "";
     }

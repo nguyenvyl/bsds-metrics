@@ -1,17 +1,8 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mycompany.bsds.quickstart;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.io.Serializable;
 
-/**
- *
- * @author nguyenvyl
- */
 @JsonPropertyOrder({"resortID", "dayNum", "skierID", "liftID", "time"})
 public class RFIDLiftData implements Serializable, Comparable<RFIDLiftData>  {
     private int resortID;
@@ -72,7 +63,7 @@ public class RFIDLiftData implements Serializable, Comparable<RFIDLiftData>  {
         this.time = time;
     }
 
-    
+    @Override
     public int compareTo(RFIDLiftData compareData) {
         int compareTime = ((RFIDLiftData) compareData).getTime();
         

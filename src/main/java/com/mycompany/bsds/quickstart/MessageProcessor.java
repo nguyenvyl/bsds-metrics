@@ -1,33 +1,46 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.mycompany.bsds.quickstart;
 
 import static com.mycompany.bsds.quickstart.MyResource.rawData;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
  * @author nguyenvyl
  */
 public class MessageProcessor {
-
+    
+    private DataAccess dataAccess;
+    
+    /**
+     * Checks if the queue needs to be processed every 10 seconds.
+     */
     public static void checkQueue() {
         Timer timer = new Timer();
         timer.schedule(new ProcessQueue(), 0, 10000);
     }
+    
+    /**
+     * Processes a get request.
+     * @param skierID skier ID to retrieve data for
+     * @param dayNum day to retrieve data for.
+     * @return SkierData representing the given user's stats for the day.
+     */
+    public SkierData processGet(int skierID, int dayNum) {
+        if(this.dataAccess == null) {
+            this.dataAccess = new DataAccess();
+        }
+        SkierData skierData = dataAccess.getUserData(skierID, dayNum);
+        return skierData;
+    }
 
+    /**
+      Timer Task that processes the queue. If it's over 800,000, it writes the queue
+      * into a CSV file, empties the queue, loads the file to the DB, and then deletes
+      * the CSV file.
+     */
     static class ProcessQueue extends TimerTask {
+        @Override
         public void run() {
             if (rawData.size() >= 800000) {
                 int dayNum = rawData.peek().getDayNum();
@@ -40,21 +53,5 @@ public class MessageProcessor {
         }
     }
 
-//    // Spawns a bunch of threads for calculating all the user's statistics for the given day.
-    public static void startUserCalculations(int dayNum) {
-        ArrayList<Integer> startIndicies = new ArrayList<>();
-        int i = 1;
-        int numSkiers = 40000;
-        int requestsPerThread = 400;
-        while (i <= numSkiers) {
-            startIndicies.add(i);
-            i += requestsPerThread;
-        }
-        ExecutorService executor = Executors.newFixedThreadPool(numSkiers / requestsPerThread);
-        for (Integer startIndex : startIndicies) {
-            executor.submit(new ProcessCalcBatch(startIndex, startIndex + requestsPerThread, dayNum));
-        }
-
-    }
 
 }

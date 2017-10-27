@@ -13,55 +13,48 @@ import javax.ws.rs.Produces;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
 
 @Path("myresource")
 public class MyResource {
     public static ConcurrentLinkedQueue<RFIDLiftData> rawData = new ConcurrentLinkedQueue();
-    public static final int flag = 0;
+    public MessageProcessor messageProcessor;
 
-//    
+    // On server load, start the process that regularly checks the queue size.
     static {
         MessageProcessor.checkQueue();
     }
     
     /**
-     * To retrieve a message
+     * GET endpoint to retrieve a user's statistics.
      *
-     * @param skierID
-     * @param dayNum
-     * @return a string
+     * @param skierID the skier's ID
+     * @param dayNum the day represented by a number
+     * @return Response containing status code and SkierData object
      */
     @GET
     @Path("myvert")
+    @Consumes(MediaType.TEXT_PLAIN)
     @Produces(MediaType.APPLICATION_JSON)
-    public SkierData getIt(
+    public Response getIt(
             @QueryParam("skierID") int skierID,
             @QueryParam("dayNum") int dayNum) 
     {
-        return new SkierData();
-//        return dataAccess.getUserData(skierID, dayNum);
+        if(this.messageProcessor == null) {
+            this.messageProcessor = new MessageProcessor();
+        }
+        SkierData skierData = this.messageProcessor.processGet(skierID, dayNum);
+        return Response
+                .status(200)
+                .entity(skierData)
+                .build();
     }
 
-    /**
-     * Consumes a post request and stores the data into a queue. 
-     *
-     * @param liftData
-     * @param message a message
-     * @return a Response
-     */
-    @POST
-    @Path("/load")
-    @Consumes("application/json")
-    public int postIt(RFIDLiftData liftData) {
-        rawData.add(liftData);
-        return rawData.size();
-    }
     
-        /**
+     /**
      * Consumes a post request and stores the data into a queue. 
      *
-     * @param liftData
-     * @param message a message
+     * @param liftData list of RFIDLiftObjects to write to the DB.
      * @return a Response
      */
     @POST
@@ -69,26 +62,6 @@ public class MyResource {
     @Consumes("application/json")
     public int postBatch(List<RFIDLiftData> liftData) {
         rawData.addAll(liftData);
-        return rawData.size();
-    }
-    
-    @POST
-    @Path("/loadUsers")
-    @Consumes(MediaType.TEXT_PLAIN)
-    public void loadUsers(int dayNum) {
-        MessageProcessor.startUserCalculations(dayNum);
-    }
-    
-    @GET
-    @Path("/queuesize")
-    public int queuesize() {
-        return rawData.size();
-    }
-    
-    @GET
-    @Path("/emptyBatch")
-    public int emptyBatch() {
-        rawData.removeAll(rawData);
         return rawData.size();
     }
     
