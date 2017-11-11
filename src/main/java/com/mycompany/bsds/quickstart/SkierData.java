@@ -2,42 +2,28 @@ package com.mycompany.bsds.quickstart;
 
 import java.io.Serializable;
 
-public class SkierData implements Serializable, Comparable<SkierData>{
-    private int skierID;
-    private int totalLifts;
-    private int totalVert;
-    private int dayNum;
+/**
+ * Created by irenakushner on 10/23/17.
+ */
+public class SkierData implements Serializable, Comparable<SkierData> {
 
-    public SkierData(int skierID, int totalLifts, int totalVert, int dayNum) {
-        this.skierID = skierID;
-        this.totalLifts = totalLifts;
-        this.totalVert = totalVert;
-        this.dayNum = dayNum;
-    }
-    
-    public SkierData(int skierID, int dayNum) {
-        this.skierID = skierID;
-        this.dayNum = dayNum;
-    }
+    private int numLifts;
+    private int totalVert;
 
     public SkierData() {
     }
-
-       
-    public int getSkierID() {
-        return skierID;
+    
+    public SkierData(int numLifts, int totalVert) {
+        this.numLifts = numLifts;
+        this.totalVert = totalVert;
     }
 
-    public void setSkierID(int skierID) {
-        this.skierID = skierID;
+    public int getNumLifts() {
+        return numLifts;
     }
 
-    public int getTotalLifts() {
-        return totalLifts;
-    }
-
-    public void setTotalLifts(int totalLifts) {
-        this.totalLifts = totalLifts;
+    public void setNumLifts(int numLifts) {
+        this.numLifts = numLifts;
     }
 
     public int getTotalVert() {
@@ -48,23 +34,19 @@ public class SkierData implements Serializable, Comparable<SkierData>{
         this.totalVert = totalVert;
     }
 
-    public int getDayNum() {
-        return dayNum;
+    @Override
+    public String toString() {
+        return "SkierData{"
+                + "numLifts=" + numLifts
+                + ", totalVert=" + totalVert
+                + '}';
     }
 
-    public void setDayNum(int dayNum) {
-        this.dayNum = dayNum;
-    }
-    
     @Override
-    public int compareTo(SkierData compareData) {
-        int compareID = ((SkierData) compareData).getSkierID();
+    public int compareTo(SkierData o) {
+        int compareVert = ((SkierData) o).getTotalVert();
+
         //ascending order
-        return this.skierID - compareID;
+        return this.getTotalVert() - compareVert;
     }
-    
-    public String toSQLString() {
-        return ("(" + skierID + "," + totalLifts + "," + totalVert + "," + dayNum + ")");
-    }
-    
 }
