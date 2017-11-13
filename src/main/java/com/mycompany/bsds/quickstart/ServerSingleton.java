@@ -26,14 +26,23 @@ public class ServerSingleton {
     }
     
     public synchronized void addMetrics(RequestMetrics metrics) {
+        if(this.metricsList == null) {
+            this.metricsList = new ConcurrentLinkedQueue<>();
+        }
         this.metricsList.add(metrics);
     } 
     
     public synchronized ConcurrentLinkedQueue<RequestMetrics> getMetrics() {
+        if(this.metricsList == null) {
+            this.metricsList = new ConcurrentLinkedQueue<>();
+        }
         return this.metricsList;
     }
     
     public synchronized void clearMetrics() {
+        if(this.metricsList == null) {
+            return;
+        }
         this.metricsList.removeAll(this.metricsList);
     }
     
